@@ -9,6 +9,8 @@ fn main() {
         file_extension,
     } = app_config;
 
+    check_draft_path(&drafts_path);
+
     // TODO Read extension to use for files ?
     let file_path = format!("{}/{}.{}", drafts_path, latest_timestamp(), file_extension);
 
