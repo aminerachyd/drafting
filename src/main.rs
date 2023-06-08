@@ -1,51 +1,20 @@
-use std::{
-    fs::{self},
-    io::Error,
-    os::unix::process::CommandExt,
-    process,
-};
-
-use chrono::Datelike;
+use drafting::*;
 
 fn main() {
-    let path = "/home/arachyd/drafts";
+    let app_config = read_app_config();
 
-    let file_path = format!("{}/{}.md", path, latest_timestamp());
+    // TODO Read from an env variable/config ?
+    let AppConfig {
+        drafts_path,
+        file_extension,
+    } = app_config;
 
-    if check_latest_file_exists(&file_path) == true {
+    // TODO Read extension to use for files ?
+    let file_path = format!("{}/{}.{}", drafts_path, latest_timestamp(), file_extension);
+
+    if check_file_exists(&file_path) == true {
         open_file_with_editor(&file_path).unwrap();
     } else {
         create_and_open_file_with_editor(&file_path).unwrap();
     }
-}
-
-// Check latest file, depends on day
-fn check_latest_file_exists(path: &str) -> bool {
-    match fs::File::open(path) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
-}
-
-// Get latest timestamp
-fn latest_timestamp() -> String {
-    let current_date = chrono::Utc::now();
-
-    let day = current_date.day();
-    let month = current_date.month();
-    let year = current_date.year();
-
-    format!("{}_{}_{}_draft", year, month, day)
-}
-
-fn open_file_with_editor(file_path: &str) -> Result<(), Error> {
-    process::Command::new("vim").arg(&file_path).exec();
-
-    Ok(())
-}
-
-fn create_and_open_file_with_editor(file_path: &str) -> Result<(), Error> {
-    fs::File::create(file_path)?;
-
-    open_file_with_editor(file_path)
 }
