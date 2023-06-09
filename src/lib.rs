@@ -3,7 +3,7 @@ use std::{
     fs::{self, File},
     io::{Error, ErrorKind, Read, Write},
     os::unix::process::CommandExt,
-    process::{self, exit},
+    process::{self},
 };
 
 use chrono::Datelike;
@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
 pub struct AppConfig {
+    pub editor: String,
     pub drafts_path: String,
     pub file_extension: String,
 }
@@ -21,6 +22,7 @@ impl AppConfig {
         let config_file_path = format!("{}/.config/drafting.yaml", HOME);
 
         let app_config = AppConfig {
+            editor: "vim".to_owned(),
             drafts_path: format!("{}/drafts", HOME),
             file_extension: "md".to_owned(),
         };
@@ -39,7 +41,6 @@ impl AppConfig {
                 ErrorKind::NotFound => {
                     println!("~/.config directory not existing, exiting...");
                     process::exit(1)
-                    // fs::create_dir("~/.config").unwrap();
                 }
                 _ => {
                     println!("Error writing config file, exiting...");
@@ -56,7 +57,14 @@ impl AppConfig {
 
         f.read_to_string(&mut buffer).unwrap();
 
-        serde_yaml::from_str(&buffer).unwrap()
+        let result = serde_yaml::from_str(&buffer);
+        match result {
+            Err(_) => {
+                println!("Failed to parse config file, probably wrong format, exiting...");
+                process::exit(1)
+            }
+            Ok(config) => config,
+        }
     }
 }
 
@@ -117,15 +125,31 @@ pub fn latest_timestamp() -> String {
     format!("{}_{}_{}_draft", year, month, day)
 }
 
-pub fn open_file_with_editor(file_path: &str) -> Result<(), Error> {
-    // TODO Using vim as editor, make is customizable ?
-    process::Command::new("vim").arg(&file_path).exec();
+pub fn open_file_with_editor(file_path: &str, editor: &str) -> Result<(), Error> {
+    process::Command::new(editor).arg(&file_path).exec();
 
     Ok(())
 }
 
-pub fn create_and_open_file_with_editor(file_path: &str) -> Result<(), Error> {
+pub fn create_and_open_file_with_editor(file_path: &str, editor: &str) -> Result<(), Error> {
     fs::File::create(file_path)?;
 
-    open_file_with_editor(file_path)
+    open_file_with_editor(file_path, editor)
+}
+
+pub fn run_subcommand(command: &str) {
+    if command.eq("config") {
+        println!("Opening config file...");
+
+        let HOME = env!("HOME");
+        let config_file_path = format!("{}/.config/drafting.yaml", HOME);
+
+        if open_file_with_editor(&config_file_path, "vim").is_err() {
+            println!("Config file doesn't exist, creating one...");
+            create_and_open_file_with_editor(&config_file_path, "vim");
+        }
+    } else {
+        println!("Unknown command, exiting...");
+        process::exit(1)
+    }
 }
