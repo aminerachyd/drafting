@@ -55,6 +55,8 @@ impl AppConfig {
     fn parse_config(mut f: File) -> Self {
         let mut buffer = "".to_owned();
 
+        let editor = std::env::var("EDITOR");
+
         f.read_to_string(&mut buffer).unwrap();
 
         let result = serde_yaml::from_str(&buffer);
@@ -63,7 +65,10 @@ impl AppConfig {
                 println!("Failed to parse config file, probably wrong format, exiting...");
                 process::exit(1)
             }
-            Ok(config) => config,
+            Ok(config) => match editor {
+                Ok(editor) => AppConfig { editor, ..config },
+                Err(_) => config,
+            },
         }
     }
 }
@@ -131,12 +136,14 @@ pub fn open_file_with_editor(file_path: &str, editor: &str) -> Result<(), Error>
     Ok(())
 }
 
+// Creates and opens file with editor in question
 pub fn create_and_open_file_with_editor(file_path: &str, editor: &str) -> Result<(), Error> {
     fs::File::create(file_path)?;
 
     open_file_with_editor(file_path, editor)
 }
 
+// Runs COMMAND: "drafting COMMAND"
 pub fn run_subcommand(command: &str) {
     if command.eq("config") {
         println!("Opening config file...");
