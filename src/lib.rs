@@ -61,19 +61,24 @@ fn open_config_file(app_config: &AppConfig) {
 
 /**
  * Subcommand: Commits drafts
- * TODO
  */
 fn commit_drafts(app_config: &AppConfig) {
     println!("Commiting draft files...");
 
-    process::Command::new("cd")
-        .arg(&app_config.config_file.drafts_path)
-        .exec();
-    process::Command::new("git").args(["add", "."]).exec();
+    let drafts_dir = &app_config.config_file.drafts_path;
+    let commit_message = format!("Drafts of {}", latest_timestamp());
+
+    env::set_current_dir(drafts_dir).unwrap();
+
     process::Command::new("git")
-        .args(["commit", "-m", "Test commit"])
-        .exec();
-    unimplemented!()
+        .args(["add", "."])
+        .spawn()
+        .unwrap();
+
+    process::Command::new("git")
+        .args(["commit", "-m", &commit_message])
+        .spawn()
+        .unwrap();
 }
 
 impl AppConfig {
