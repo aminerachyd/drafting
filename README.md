@@ -28,4 +28,4 @@ file_extension: <YOUR_EXTENSION>
 ### TODO
 
 - [x] Editor choice
-- [ ] Option to commit and push drafts to a git repository
+- [x] Option to commit and push drafts to a git repository
