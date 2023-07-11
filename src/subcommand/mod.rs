@@ -1,19 +1,45 @@
 pub mod commit;
 pub mod config;
+pub mod push;
 
-use self::{commit::run_subcommand_commit, config::run_subcommand_config};
+use self::{
+    commit::run_subcommand_commit, config::run_subcommand_config, push::run_subcommand_push,
+};
 use crate::AppConfig;
 use std::process;
 
-pub fn run_subcommand(command: &str, app_config: &AppConfig) {
-    match command {
-        "config" => {
+enum SubCommand {
+    Config,
+    Commit,
+    Push,
+    Unknown,
+}
+
+impl SubCommand {
+    fn parse(subcommand: &str) -> Self {
+        match subcommand {
+            "config" => SubCommand::Config,
+            "commit" => SubCommand::Commit,
+            "push" => SubCommand::Push,
+            _ => SubCommand::Unknown,
+        }
+    }
+}
+
+pub fn run_subcommand(subcommand: &str, app_config: &AppConfig) {
+    let subcommand = SubCommand::parse(subcommand);
+
+    match subcommand {
+        SubCommand::Config => {
             run_subcommand_config(&app_config);
         }
-        "commit" => {
+        SubCommand::Commit => {
             run_subcommand_commit(&app_config);
         }
-        _ => {
+        SubCommand::Push => {
+            run_subcommand_push(&app_config);
+        }
+        SubCommand::Unknown => {
             exit_unknown_command();
         }
     }

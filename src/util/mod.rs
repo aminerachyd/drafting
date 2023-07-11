@@ -1,6 +1,6 @@
 pub mod app_config;
 
-use std::{fs, io::Error, os::unix::process::CommandExt, process};
+use std::{env, fs, io::Error, os::unix::process::CommandExt, process};
 
 use chrono::Datelike;
 
@@ -24,4 +24,24 @@ pub fn today_timestamp() -> String {
     let year = current_date.year();
 
     format!("{}_{}_{}", year, month, day)
+}
+
+pub fn git_add_and_commit(commit_message: &str) {
+    process::Command::new("git")
+        .args(["add", "."])
+        .spawn()
+        .unwrap();
+
+    process::Command::new("git")
+        .args(["commit", "-m", &commit_message])
+        .spawn()
+        .unwrap();
+}
+
+pub fn git_push() {
+    process::Command::new("git").arg("push").spawn().unwrap();
+}
+
+pub fn change_dir(dir: &str) {
+    env::set_current_dir(dir).unwrap();
 }
